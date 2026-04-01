@@ -44,16 +44,28 @@ func _gui_input(event: InputEvent):
 		else:
 			_stop_dragging()
 
-func _process(_delta):
-	# 如果正在拖拽，每帧更新位置
+var target_rotation: float = 0.0
+
+func _process(delta):
 	if is_dragging:
 		var target_pos = get_global_mouse_position() - drag_offset
-		# 这里使用 lerp 可以让跟随更丝滑，0.2 是平滑系数
-		global_position = global_position.lerp(target_pos, 0.25)
 		
-		# 炉石小细节：移动时产生一点点倾斜
+		# 1. 更加物理的位移：增加跟随速度
+		# 0.25 改为基于 delta 的动态值，25.0 是跟随强度，数值越大越跟手
+		global_position = global_position.lerp(target_pos, 25.0 * delta)
+		
+		# 2. 改进的旋转逻辑
+		# 计算鼠标移动速度
 		var move_velocity = get_global_mouse_position() - (global_position + drag_offset)
-		rotation = clamp(move_velocity.x * 0.01, -0.2, 0.2)
+		
+		# 计算目标旋转角度（往哪边动就往哪边斜）
+		target_rotation = clamp(move_velocity.x * 0.02, -0.25, 0.25)
+		
+		# 对旋转本身进行平滑插值，消除抖动
+		rotation = lerp_angle(rotation, target_rotation, 10.0 * delta)
+	else:
+		# 没拖拽时，旋转平滑归零
+		rotation = lerp_angle(rotation, 0, 10.0 * delta)
 
 # --- 5. 拖拽动作分解 ---
 func _start_dragging():
@@ -68,7 +80,6 @@ func _start_dragging():
 func _stop_dragging():
 	is_dragging = false
 	z_index = 0
-	rotation = 0 # 重置倾斜
 	
 	# 简单的判定：如果 Y 坐标小于屏幕高度的一半，视为“打出”
 	var screen_size = get_viewport_rect().size
