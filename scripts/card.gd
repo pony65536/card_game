@@ -21,6 +21,9 @@ var original_position: Vector2 = Vector2.ZERO
 
 # --- 3. 初始化与生命周期 ---
 func _ready():
+	mouse_filter = Control.MOUSE_FILTER_STOP # 确保能接收鼠标事件
+	clip_contents = false
+	size = Vector2(480, 720) # 强制固定尺寸
 	print(name_label, atk_label, hp_label, art_sprite)
 	# 记录初始位置，用于松手后弹回
 	original_position = position

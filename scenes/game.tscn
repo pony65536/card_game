@@ -1,5 +1,10 @@
 [gd_scene format=3 uid="uid://dsyabqfh2k2j5"]
+[ext_resource type="Script" uid="uid://mxtjnnuygv6d" path="res://scripts/game.gd" id="1_uwrxv"]
+[ext_resource type="PackedScene" uid="uid://d2ugtop3c60eb" path="res://scenes/hand.tscn" id="2_yqjtg"]
 
 [node name="Game" type="Control" unique_id=356450298]
-layout_mode = 3
-anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_uwrxv")
+
+[node name="Hand" parent="." instance=ExtResource("2_yqjtg")]

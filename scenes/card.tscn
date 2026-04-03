@@ -1,19 +1,14 @@
 [gd_scene format=3 uid="uid://c6iyfspveelpp"]
 
 [ext_resource type="Texture2D" uid="uid://b6dho7tgdqpib" path="res://icon.svg" id="1_ig7tw"]
-[ext_resource type="Script" uid="uid://nwyu1genqhvy" path="res://scripts/card_ui.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://nwyu1genqhvy" path="res://scripts/card.gd" id="2_0xm2m"]
 [ext_resource type="Resource" uid="uid://c3nyv4rmevvlk" path="res://resources/cards/murloc.tres" id="3_h2yge"]
 [ext_resource type="Texture2D" uid="uid://cjopj5b7xufdl" path="res://assets/images/card_background.png" id="4_1bvp3"]
 
 [node name="Main" type="Control" unique_id=63235752]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = -672.0
-offset_bottom = 72.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 720.0
 script = ExtResource("2_0xm2m")
 card_data = ExtResource("3_h2yge")
 
