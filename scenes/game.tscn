@@ -9,9 +9,41 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_uwrxv")
 
 [node name="Hand" parent="." unique_id=423546264 instance=ExtResource("2_yqjtg")]
 
 [node name="BattleSystem" type="Node" parent="." unique_id=828446633]
 script = ExtResource("3_lnu2h")
+
+[node name="Board" type="Node2D" parent="." unique_id=1879181680]
+
+[node name="MyMinion" type="Button" parent="Board" unique_id=1445169144]
+offset_left = 400.0
+offset_top = 500.0
+offset_right = 600.0
+offset_bottom = 560.0
+
+[node name="EnemyMinion" type="Button" parent="Board" unique_id=538684712]
+offset_left = 800.0
+offset_top = 300.0
+offset_right = 1000.0
+offset_bottom = 360.0
+
+[node name="EndTurnButton" type="Button" parent="." unique_id=960134346]
+layout_mode = 0
+offset_left = 1600.0
+offset_top = 500.0
+offset_right = 1800.0
+offset_bottom = 560.0
+text = "结束回合"
+
+[node name="ManaLabel" type="Label" parent="." unique_id=60502191]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 93.0
+offset_bottom = 43.0
+text = "法力：0/0"

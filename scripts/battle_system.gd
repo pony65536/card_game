@@ -23,23 +23,92 @@ var _pending_animations: Array = [] # AnimationEvent 列表
 var board: Dictionary = {0: [], 1: []}
 var heroes: Dictionary = {} # owner_id → GameEntity
 
+# ── 回合与法力 ─────────────────────────────────────
+var active_player: int = 0
+var turn_number: int = 1
+var mana: Dictionary = {0: 0, 1: 0}
+var max_mana: Dictionary = {0: 0, 1: 0}
+
+# ── 牌库与手牌 ─────────────────────────────────────
+# deck[player_id] = Array of CardData（剩余牌库）
+# hand[player_id] = Array of CardData（当前手牌，逻辑层维护）
+var deck: Dictionary = {0: [], 1: []}
+var hand: Dictionary = {0: [], 1: []}
+const MAX_HAND_SIZE: int = 10
+
+# 信号
+signal turn_started(player_id: int, turn: int)
+signal mana_changed(player_id: int, current: int, maximum: int)
+signal card_drawn(player_id: int, card_data: CardData) # 通知表现层加一张牌到手
+signal hand_full(player_id: int) # 爆牌提示
+
 
 # ══════════════════════════════════════════════════
 # 公共接口
 # ══════════════════════════════════════════════════
 
+## 游戏开始时调用，初始化第一回合
+func start_game() -> void:
+	active_player = 0
+	turn_number = 1
+	_begin_turn(0)
+
+## 设置牌库（game.gd 在 start_game 前调用）
+func setup_deck(player_id: int, cards: Array) -> void:
+	deck[player_id] = cards.duplicate()
+	deck[player_id].shuffle()
+
+## 直接抽牌（game.gd 初始手牌时调用）
+## 返回抽到的 CardData，爆牌或牌库空时返回 null
+func draw_card_for_player(player_id: int) -> CardData:
+	if hand[player_id].size() >= MAX_HAND_SIZE:
+		print("[BattleSystem] 玩家 %d 手牌已满，爆牌" % player_id)
+		emit_signal("hand_full", player_id)
+		return null
+	if deck[player_id].is_empty():
+		print("[BattleSystem] 玩家 %d 牌库已空" % player_id)
+		return null
+	var card: CardData = deck[player_id].pop_front()
+	hand[player_id].append(card)
+	emit_signal("card_drawn", player_id, card)
+	return card
+
+## 从手牌移除一张（打出后调用）
+func remove_from_hand(player_id: int, card_data: CardData) -> void:
+	hand[player_id].erase(card_data)
+
 ## UI 层调用这个函数提交玩家操作
 func submit_command(cmd: BattleCommand) -> bool:
 	if _state != State.WAITING_INPUT:
-		print("[BattleSystem] 当前锁定，拒绝输入：", cmd)
+		print("[BattleSystem] 当前锁定，拒绝输入：", cmd.to_string())
 		return false
+	# 攻击指令校验
+	if cmd.type == BattleCommand.Type.MINION_ATTACK:
+		if cmd.source.owner_id != active_player:
+			print("[BattleSystem] 不是你的回合")
+			return false
+		if cmd.source.has_attacked:
+			print("[BattleSystem] 该随从本回合已攻击过")
+			return false
+	# 出牌指令：检查法力
+	if cmd.type == BattleCommand.Type.PLAY_MINION or cmd.type == BattleCommand.Type.PLAY_SPELL:
+		var cost = cmd.card_data.get("cost", 0)
+		if mana[active_player] < cost:
+			print("[BattleSystem] 法力不足")
+			return false
 	_command_queue.append(cmd)
-	print("[BattleSystem] 入队：", cmd)
+	print("[BattleSystem] 入队：", cmd.to_string())
 	_process_queue()
 	return true
 
 func get_state() -> int:
 	return _state
+
+func get_mana(player_id: int) -> int:
+	return mana.get(player_id, 0)
+
+func get_max_mana(player_id: int) -> int:
+	return max_mana.get(player_id, 0)
 
 
 # ══════════════════════════════════════════════════
@@ -71,14 +140,22 @@ func _resolve_command(cmd: BattleCommand) -> void:
 	match cmd.type:
 		BattleCommand.Type.MINION_ATTACK:
 			atoms = _build_minion_attack(cmd.source, cmd.target)
+			cmd.source.has_attacked = true # 标记本回合已攻击
 		BattleCommand.Type.PLAY_MINION:
+			var cost = cmd.card_data.get("cost", 0)
+			mana[active_player] = max(0, mana[active_player] - cost)
+			emit_signal("mana_changed", active_player, mana[active_player], max_mana[active_player])
 			atoms = _build_play_minion(cmd.source, cmd.card_data, cmd.target)
 		BattleCommand.Type.PLAY_SPELL:
+			var cost = cmd.card_data.get("cost", 0)
+			mana[active_player] = max(0, mana[active_player] - cost)
+			emit_signal("mana_changed", active_player, mana[active_player], max_mana[active_player])
 			atoms = _build_play_spell(cmd.source, cmd.card_data, cmd.target)
 		BattleCommand.Type.HERO_POWER:
 			atoms = _build_hero_power(cmd.source, cmd.target)
 		BattleCommand.Type.END_TURN:
-			atoms = []
+			_end_turn()
+			return # 回合结束单独处理，不走原子操作
 		_:
 			push_warning("[BattleSystem] 未处理的 CommandType: %d" % cmd.type)
 
@@ -177,8 +254,15 @@ func _execute_atom(atom: AtomicAction) -> void:
 			}))
 
 		AtomicAction.Type.DRAW_CARD:
-			print("[Atom] 抽牌")
-			_pending_animations.append(AnimationEvent.new("draw_card", {}))
+			var pid: int = atom.data.get("player_id", 0)
+			var drawn = draw_card_for_player(pid)
+			if drawn:
+				print("[Atom] 玩家 %d 抽到：%s" % [pid, drawn.card_name])
+			else:
+				print("[Atom] 玩家 %d 无法抽牌" % pid)
+			_pending_animations.append(AnimationEvent.new("draw_card", {
+				"player_id": pid,
+			}))
 
 		AtomicAction.Type.APPLY_BUFF:
 			atom.target.attack += atom.data.get("attack_bonus", 0)
@@ -247,6 +331,34 @@ func _make_minion(card: Dictionary, owner_id: int) -> GameEntity:
 func _remove_from_board(minion: GameEntity) -> void:
 	for pid in board:
 		board[pid].erase(minion)
+
+# ══════════════════════════════════════════════════
+# 回合管理
+# ══════════════════════════════════════════════════
+
+func _begin_turn(player_id: int) -> void:
+	active_player = player_id
+	max_mana[player_id] = min(max_mana[player_id] + 1, 10)
+	mana[player_id] = max_mana[player_id]
+	for minion in board[player_id]:
+		minion.has_attacked = false
+	print("[BattleSystem] 回合 %d 开始，玩家 %d，法力 %d/%d" % [
+		turn_number, player_id, mana[player_id], max_mana[player_id]])
+	emit_signal("mana_changed", player_id, mana[player_id], max_mana[player_id])
+	# 回合开始抽一张牌
+	draw_card_for_player(player_id)
+	emit_signal("turn_started", player_id, turn_number)
+
+func _end_turn() -> void:
+	print("[BattleSystem] 玩家 %d 结束回合" % active_player)
+	_pending_animations.append(AnimationEvent.new("end_turn", {
+		"player_id": active_player,
+	}))
+	# 切换到对方回合
+	var next_player = 1 - active_player
+	if next_player == 0:
+		turn_number += 1
+	_begin_turn(next_player)
 
 func _set_state(new_state: int) -> void:
 	_state = new_state
