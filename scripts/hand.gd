@@ -9,10 +9,11 @@ const CardScene = preload("res://scenes/card.tscn")
  
 var cards: Array = []
  
-@export var base_scale: float = 0.8
-@export var overlap: float = 150.0
-@export var max_fan_angle: float = 10.0
-@export var card_y_arc: float = 30.0
+@export var base_scale: float = 0.5
+@export var overlap: float = 120.0
+@export var max_fan_angle: float = 15.0
+@export var card_y_arc: float = 50.0
+@export var max_x_squeeze: float = 0.1
  
 func _ready():
 	pass
@@ -52,31 +53,52 @@ func _update_layout():
 	var n = cards.size()
 	if n == 0:
 		return
+	
 	var screen_w = get_viewport().get_visible_rect().size.x
 	var screen_h = get_viewport().get_visible_rect().size.y
 	var center_x = screen_w / 2.0
-	var base_y = screen_h + 50.0
+	
+	# 5. 调整基础 Y轴位置，可能需要让手牌再整体往下一点，给拱形腾出空间
+	var base_y = screen_h * 0.75
+	
 	var card_w = Globals.CARD_WIDTH * base_scale
 	var spacing = card_w - overlap
-	var total_width = card_w + spacing * (n - 1)
-	if total_width > screen_w * 0.85:
-		spacing = (screen_w * 0.85 - card_w) / max(n - 1, 1)
-		total_width = card_w + spacing * (n - 1)
-	var start_x = center_x - total_width / 2.0
- 
+	
+	# 计算总宽度时加入挤压，牌越多挤压越明显
+	var dynamic_total_width = card_w + spacing * (n - 1) * (1.0 - (float(n) / 10.0) * max_x_squeeze)
+	
+	# 宽度超出限制时的处理保持不变，或者略微放宽
+	if dynamic_total_width > screen_w * 0.90:
+		spacing = (screen_w * 0.90 - card_w) / max(n - 1, 1)
+		dynamic_total_width = card_w + spacing * (n - 1)
+	
+	var start_x = center_x - dynamic_total_width / 2.0
+
 	for i in range(n):
 		var card = cards[i]
-		var t = 0.5 if n == 1 else float(i) / float(n - 1)
-		var angle = lerp(-max_fan_angle, max_fan_angle, t)
-		var arc_offset = card_y_arc * 4.0 * (t - 0.5) * (t - 0.5)
- 
-		card.pivot_offset = Vector2(Globals.CARD_WIDTH / 2.0, Globals.CARD_HEIGHT)
-		card.scale = Vector2(base_scale, base_scale)
+		var t = float(i) / float(n - 1) - 0.5 if n > 1 else 0.0
+		
+		# ── 1. 旋转计算 ──
+		var angle = sin(t * PI) * max_fan_angle
+		
+		# ── 2. 弧线计算 (修正点) ──
+		# 修改为正值：两端 (t=0.5) 时 arc_offset = card_y_arc (向下掉)
+		# 中间 (t=0) 时 arc_offset = 0 (保持在 base_y)
+		var arc_offset = card_y_arc * (4.0 * t * t)
+		
+		# ── 3. 属性应用 ──
+		card.pivot_offset = Vector2(Globals.CARD_WIDTH / 2.0, Globals.CARD_HEIGHT * 1.5)
 		card.rotation_degrees = angle
+		card.scale = Vector2(base_scale, base_scale)
 		card.z_index = i
-		card.position = Vector2(
-			start_x + spacing * i - (Globals.CARD_WIDTH / 2.0) * base_scale,
-			base_y + arc_offset - Globals.CARD_HEIGHT * base_scale
-		)
-		# 更新回手基准位置
+		
+		# ── 4. 坐标对齐 (万能公式) ──
+		var target_x = start_x + spacing * i
+		# 这里的 base_y 现在代表手牌“拱顶”的 Y 坐标
+		var target_y = base_y + arc_offset
+		
+		# 重点：直接减去 (pivot_offset * scale) 来完全抵消支点造成的视觉位移
+		# 这样无论你 pivot 设在哪，卡牌的旋转中心都会精准对齐到 (target_x, target_y)
+		card.position = Vector2(target_x, target_y) - card.pivot_offset * base_scale
+
 		card.original_position = card.position

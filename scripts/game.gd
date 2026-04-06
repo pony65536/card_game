@@ -7,6 +7,7 @@ extends Control
 @onready var enemy_minion_btn = $Board/EnemyMinion
 @onready var end_turn_btn = $EndTurnButton
 @onready var mana_label = $ManaLabel
+@onready var board_ui = $BoardUI
 
 const STATE_WAITING = 0
 const STATE_RESOLVING = 1
@@ -58,6 +59,16 @@ func _ready():
 	enemy_minion_entity.owner_id = 1
 	battle_system.board[1].append(enemy_minion_entity)
 
+	var fake_summon_event = AnimationEvent.new("summon_minion", {
+		"minion_id": enemy_minion_entity.id,
+		"owner_id": 1,
+		"position": 0,
+	})
+	# 等 BoardUI ready 之后再调用
+	await get_tree().process_frame
+	board_ui.handle_animation_event(fake_summon_event)
+	$Board.visible = false
+
 	# ── 建牌库（用鱼人填满，之后换成真实牌库）────
 	var murloc = load("res://resources/cards/murloc.tres")
 	var player_deck: Array = []
@@ -80,6 +91,8 @@ func _ready():
 	battle_system.mana_changed.connect(_on_mana_changed)
 	battle_system.card_drawn.connect(_on_card_drawn)
 	battle_system.hand_full.connect(_on_hand_full)
+
+	board_ui.attack_command_requested.connect(_on_board_attack_requested)
 
 	# ── 初始手牌：各抽4张，然后开始游戏 ──────────
 	for i in range(4):
@@ -143,11 +156,7 @@ func _on_enemy_minion_pressed():
 
 func _unhandled_input(event: InputEvent):
 	if event is InputEventMouseButton and event.pressed:
-		if _select_state == SelectState.WAITING_TARGET:
-			_select_state = SelectState.IDLE
-			_selected_attacker = null
-			_refresh_minion_buttons()
-			print("[Game] 取消选择")
+		board_ui.cancel_selection()
 
 # ── 打出手牌 ──────────────────────────────────────
 
@@ -176,15 +185,13 @@ func _on_card_play_requested(card: Control, card_data: CardData):
 
 func _on_animation_events_ready(events: Array):
 	for e in events:
+		board_ui.handle_animation_event(e)
 		match e.event_type:
 			"take_damage":
 				print("[动画] %s 受到 %d 伤害" % [
 					e.params.get("target_id", "?"), e.params.get("amount", 0)])
 			"minion_death":
-				print("[动画] 随从死亡：", e.params.get("minion_id", "?"))
 				_on_minion_died(e.params.get("minion_id", ""))
-			"end_turn":
-				print("[动画] 回合结束")
 			_:
 				print("[动画] ", e.event_type, e.params)
 	_refresh_minion_buttons()
@@ -207,6 +214,11 @@ func _on_turn_started(player_id: int, turn: int):
 func _on_mana_changed(player_id: int, current: int, maximum: int):
 	if player_id == 0:
 		mana_label.text = "法力：%d / %d" % [current, maximum]
+
+func _on_board_attack_requested(attacker: GameEntity, target: GameEntity):
+	var cmd = BattleCommand.new(
+		BattleCommand.Type.MINION_ATTACK, attacker, target)
+	battle_system.submit_command(cmd)
 
 # ── 工具 ──────────────────────────────────────────
 

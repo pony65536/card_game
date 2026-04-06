@@ -14,6 +14,7 @@ signal drag_canceled(card: Control)
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
 var original_position: Vector2 = Vector2.ZERO
+var original_scale: Vector2 = Vector2.ONE
  
 @export var card_data: CardData:
 	set(value):
@@ -61,16 +62,17 @@ func _start_dragging():
 	is_dragging = true
 	drag_offset = get_global_mouse_position() - global_position
 	z_index = 100
+	original_scale = scale
 	emit_signal("drag_started", self )
 	var t = create_tween()
-	t.tween_property(self , "scale", Vector2(1.1, 1.1), 0.1)
- 
+	# 放大是相对于当前 scale，不是绝对值
+	t.tween_property(self , "scale", scale * 1.1, 0.1)
+
 func _stop_dragging():
 	is_dragging = false
 	z_index = 0
 	var screen_h = get_viewport_rect().size.y
 	if global_position.y < screen_h * 0.6:
-		# 抬手位置在屏幕上半区 → 发出打出请求，由 Hand 决定后续
 		emit_signal("play_requested", self )
 	else:
 		emit_signal("drag_canceled", self )
@@ -81,7 +83,7 @@ func _stop_dragging():
 func return_to_hand():
 	var t = create_tween().set_parallel(true)
 	t.tween_property(self , "position", original_position, 0.3).set_trans(Tween.TRANS_CUBIC)
-	t.tween_property(self , "scale", Vector2(1.0, 1.0), 0.3)
+	t.tween_property(self , "scale", original_scale, 0.3)
  
 func play_animation_then_free():
 	var t = create_tween()

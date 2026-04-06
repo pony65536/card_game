@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://bd23tavvndf2b"]
+
+[ext_resource type="Script" uid="uid://c8slf05ux8qo5" path="res://scripts/minion.gd" id="1_8kpqo"]
+[ext_resource type="Texture2D" uid="uid://3ny4xbspn2rl" path="res://assets/images/minion_frame.png" id="1_i87l1"]
+
+[node name="MinionCard" type="Control" unique_id=21886273]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 240.0
+script = ExtResource("1_8kpqo")
+
+[node name="Portraint" type="TextureRect" parent="." unique_id=1639794784]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 30.0
+offset_right = 160.0
+offset_bottom = 170.0
+
+[node name="Frame" type="TextureRect" parent="." unique_id=1974812376]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_i87l1")
+expand_mode = 1
+
+[node name="AttackLabel" type="Label" parent="." unique_id=442397181]
+layout_mode = 0
+offset_left = 36.0
+offset_top = 166.0
+offset_right = 76.0
+offset_bottom = 205.0
+theme_override_font_sizes/font_size = 28
+
+[node name="HealthLabel" type="Label" parent="." unique_id=948973125]
+layout_mode = 0
+offset_left = 158.0
+offset_top = 166.0
+offset_right = 198.0
+offset_bottom = 205.0
+theme_override_font_sizes/font_size = 28
