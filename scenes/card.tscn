@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c6iyfspveelpp"]
 
-[ext_resource type="Texture2D" uid="uid://b6dho7tgdqpib" path="res://icon.svg" id="1_ig7tw"]
+[ext_resource type="Texture2D" uid="uid://b6dho7tgdqpib" path="res://assets/images/icon.svg" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://nwyu1genqhvy" path="res://scripts/card.gd" id="2_0xm2m"]
 [ext_resource type="Resource" uid="uid://c3nyv4rmevvlk" path="res://resources/cards/murloc.tres" id="3_h2yge"]
 [ext_resource type="Texture2D" uid="uid://cjopj5b7xufdl" path="res://assets/images/card_background.png" id="4_1bvp3"]
