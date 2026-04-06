@@ -179,7 +179,7 @@ func _on_card_play_requested(card: Control, card_data: CardData):
 		battle_system.remove_from_hand(0, card_data)
 		hand.remove_card(card)
 	else:
-		card.return_to_hand()
+		hand._on_card_drag_canceled(card)
 
 # ── BattleSystem 信号 ─────────────────────────────
 
