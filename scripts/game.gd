@@ -8,6 +8,7 @@ extends Control
 @onready var end_turn_btn = $EndTurnButton
 @onready var mana_label = $ManaLabel
 @onready var board_ui = $BoardUI
+@onready var opponent_ai = $OpponentAI
 
 const STATE_WAITING = 0
 const STATE_RESOLVING = 1
@@ -39,6 +40,8 @@ func _ready():
 	enemy_hero.attack = 0
 	enemy_hero.owner_id = 1
 	battle_system.heroes[1] = enemy_hero
+
+	opponent_ai.battle_system = battle_system
 
 	# ── 测试随从 ──────────────────────────────────
 	my_minion_entity = GameEntity.new()
@@ -162,18 +165,11 @@ func _unhandled_input(event: InputEvent):
 
 func _on_card_play_requested(card: Control, card_data: CardData):
 	print("[Game] 出牌：%s（费用%d）" % [card_data.card_name, card_data.cost])
-	var card_dict = {
-		"id": card_data.card_name,
-		"name": card_data.card_name,
-		"cost": card_data.cost,
-		"hp": card_data.health,
-		"attack": card_data.attack,
-	}
 	var cmd = BattleCommand.new(
 		BattleCommand.Type.PLAY_MINION,
 		battle_system.heroes[0],
 		null,
-		card_dict
+		card_data
 	)
 	if battle_system.submit_command(cmd):
 		battle_system.remove_from_hand(0, card_data)
@@ -202,14 +198,12 @@ func _on_game_state_changed(new_state: int):
 		STATE_RESOLVING: print("[Game] 结算中...")
 		STATE_GAME_OVER: print("[Game] 游戏结束")
 
-func _on_turn_started(player_id: int, turn: int):
-	print("[Game] 回合 %d 开始，玩家 %d" % [turn, player_id])
-	end_turn_btn.disabled = (player_id != 0)
-	if player_id == 1:
-		print("[Game] 对手回合，自动结束（无AI）")
-		await get_tree().create_timer(1.0).timeout
-		var cmd = BattleCommand.new(BattleCommand.Type.END_TURN)
-		battle_system.submit_command(cmd)
+func _on_turn_started(player_id: int, _turn: int) -> void:
+	# 可以在这里更新 UI 提示当前是谁的回合
+	if player_id == 0:
+		print("[Game] 你的回合")
+	else:
+		print("[Game] 对手回合")
 
 func _on_mana_changed(player_id: int, current: int, maximum: int):
 	if player_id == 0:

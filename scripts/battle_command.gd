@@ -15,10 +15,10 @@ enum Type {
 var type: Type
 var source: GameEntity # 操作发起者
 var target: GameEntity # 操作目标（可为 null）
-var card_data: Dictionary # 打出手牌时携带的卡牌数据
+var card_data: CardData # 打出手牌时携带的卡牌数据
 
 func _init(p_type: Type, p_source: GameEntity = null,
-		p_target: GameEntity = null, p_card: Dictionary = {}) -> void:
+		p_target: GameEntity = null, p_card: CardData = null) -> void:
 	type = p_type
 	source = p_source
 	target = p_target
