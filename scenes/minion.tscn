@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://c8slf05ux8qo5" path="res://scripts/minion.gd" id="1_8kpqo"]
 [ext_resource type="Texture2D" uid="uid://3ny4xbspn2rl" path="res://assets/images/minion_frame.png" id="1_i87l1"]
 
-[node name="MinionCard" type="Control" unique_id=21886273]
+[node name="Minion" type="Control" unique_id=21886273]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 200.0

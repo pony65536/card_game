@@ -9,6 +9,8 @@ extends Control
 @onready var mana_label = $ManaLabel
 @onready var board_ui = $BoardUI
 @onready var opponent_ai = $OpponentAI
+@onready var hero_player = $HeroPlayer
+@onready var hero_opponent = $HeroOpponent
 
 const STATE_WAITING = 0
 const STATE_RESOLVING = 1
@@ -61,6 +63,14 @@ func _ready():
 	enemy_minion_entity.attack = 1
 	enemy_minion_entity.owner_id = 1
 	battle_system.board[1].append(enemy_minion_entity)
+
+		# 英雄头像初始化
+	var godot_logo = preload("res://assets/images/icon.svg")
+	hero_player.setup(player_hero, godot_logo)
+	hero_opponent.setup(enemy_hero, godot_logo)
+
+	# 点击对方英雄可以作为攻击目标
+	hero_opponent.clicked.connect(_on_enemy_hero_clicked)
 
 	var fake_summon_event = AnimationEvent.new("summon_minion", {
 		"minion_id": enemy_minion_entity.id,
@@ -184,6 +194,8 @@ func _on_animation_events_ready(events: Array):
 		board_ui.handle_animation_event(e)
 		match e.event_type:
 			"take_damage":
+				hero_player.update_hp()
+				hero_opponent.update_hp()
 				print("[动画] %s 受到 %d 伤害" % [
 					e.params.get("target_id", "?"), e.params.get("amount", 0)])
 			"minion_death":
@@ -237,3 +249,18 @@ func _refresh_minion_buttons():
 
 func _minion_label(e: GameEntity) -> String:
 	return "%s  ATK:%d  HP:%d/%d" % [e.entity_name, e.attack, e.hp, e.max_hp]
+
+
+func _on_enemy_hero_clicked(portrait: Hero) -> void:
+	# 暂时只处理随从攻击英雄的情况
+	if _select_state != SelectState.WAITING_TARGET:
+		print("[Game] 请先选中我方随从")
+		return
+	var cmd = BattleCommand.new(
+		BattleCommand.Type.MINION_ATTACK,
+		_selected_attacker,
+		portrait.entity
+	)
+	battle_system.submit_command(cmd)
+	_select_state = SelectState.IDLE
+	_selected_attacker = null

@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://cxjip6sl0comh" path="res://scripts/battle_system.gd" id="3_lnu2h"]
 [ext_resource type="Script" uid="uid://7aymgt17l2hg" path="res://scripts/board_ui.gd" id="4_lbhrr"]
 [ext_resource type="Script" uid="uid://bj7jejc8nkdx4" path="res://scripts/opponent_ai.gd" id="5_iywne"]
+[ext_resource type="PackedScene" uid="uid://b4juymjrvbrum" path="res://scenes/hero.tscn" id="6_p57ef"]
 
 [node name="Game" type="Control" unique_id=356450298]
 layout_mode = 3
@@ -56,3 +57,15 @@ script = ExtResource("4_lbhrr")
 [node name="OpponentAI" type="Node" parent="." unique_id=1524888939 node_paths=PackedStringArray("battle_system")]
 script = ExtResource("5_iywne")
 battle_system = NodePath("../BattleSystem")
+
+[node name="HeroPlayer" parent="." unique_id=631234686 instance=ExtResource("6_p57ef")]
+layout_mode = 0
+offset_left = 908.0
+offset_top = 750.0
+offset_right = 908.0
+offset_bottom = 750.0
+
+[node name="HeroOpponent" parent="." unique_id=1636023621 instance=ExtResource("6_p57ef")]
+layout_mode = 0
+offset_left = 908.0
+offset_right = 908.0

@@ -4,7 +4,7 @@ extends Node2D
 
 signal attack_command_requested(attacker: GameEntity, target: GameEntity)
 
-const MinionScene = preload("res://scenes/MinionCard.tscn")
+const MinionScene = preload("res://scenes/Minion.tscn")
 
 # 战场布局参数
 @export var player_board_y: float = 550.0 # 我方随从的 Y 坐标
@@ -12,7 +12,7 @@ const MinionScene = preload("res://scenes/MinionCard.tscn")
 @export var minion_spacing: float = 220.0 # 随从间距
 @export var minion_size: Vector2 = Vector2(200, 240)
 
-# entity_id → MinionCard 节点
+# entity_id → Minion节点
 var _minion_nodes: Dictionary = {}
 
 # 攻击选择状态

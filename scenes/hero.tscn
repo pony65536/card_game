@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://b4juymjrvbrum"]
+
+[ext_resource type="Script" uid="uid://dmugcyoo85h1t" path="res://scripts/hero.gd" id="1_3uyx6"]
+
+[node name="Hero" type="Control" unique_id=631234686]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_3uyx6")
+
+[node name="Portrait" type="TextureRect" parent="." unique_id=232456550]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HealthLabel" type="Label" parent="." unique_id=1636729075]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ClickArea" type="Button" parent="." unique_id=277860205]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
